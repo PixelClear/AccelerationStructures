@@ -1,0 +1,10 @@
+*.VC
+*.suo
+*.ipch
+*.exe
+*.ilk
+*.pdb
+*.vcxproj
+*.idb
+*.tlog
+/.vs/*
