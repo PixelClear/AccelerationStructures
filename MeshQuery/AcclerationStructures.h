@@ -5,7 +5,7 @@
 namespace MeshQuery
 {
 	constexpr float kEpsilon = 1e-8;
-
+	
 	class Ray
 	{
 	public:
@@ -80,6 +80,18 @@ namespace MeshQuery
 
 		~AABB() = default;
 
+		AABB& extendBy(const glm::vec3& p)
+		{
+			if (p.x < min_.x) min_.x = p.x;
+			if (p.y < min_.y) min_.y = p.y;
+			if (p.z < min_.z) min_.z = p.z;
+			if (p.x > max_.x) max_.x = p.x;
+			if (p.y > max_.y) max_.y = p.y;
+			if (p.z > max_.z) max_.z = p.z;
+
+			return *this;
+		}
+
 		glm::vec3 min_;
 		glm::vec3 max_;
 	};
@@ -91,106 +103,23 @@ namespace MeshQuery
 		glm::vec3 uv_[3];
 	};
 
-	struct Mesh
-	{
-		std::vector<float> vertices_;
-		std::vector<float> normals_;
-		std::vector<uint32_t> faces_;
-		std::vector<Triangle> triangles_;
-
-		uint32_t indexVbo_;
-		uint32_t vertexVbo_;
-		uint32_t normalVbo_;
-
-		AABB aabb_;
-	}mesh;
-
 	class AccelerationStructure
 	{
 	public:
 		
+		bool intersect(const Ray& r, const AABB& aabb) const;
+		bool intersect(const Ray& r, const Triangle& triangle, float& t) const;
+	};
 
-		bool intersect(const Ray& r, const AABB& aabb) const
-		{
-			float tMin = (aabb.min_.x - r.origin_.x) / r.direction_.x;
-			float tMax = (aabb.max_.x - r.origin_.x) / r.direction_.x;
+	class NoAcclerationStructure : public AccelerationStructure
+	{
+	public:
 
-			if (tMin > tMax)
-			{
-				std::swap(tMin, tMax);
-			}
+	    //Get closest point on triangle
+		void getClosestPointOnTri(glm::vec3 p, Triangle t, glm::vec3& closestPoint);
 
-			float tyMin = (aabb.min_.y - r.origin_.y) / r.direction_.y;
-			float tyMax = (aabb.max_.y - r.origin_.y) / r.direction_.y;
-
-			if (tyMin > tyMax)
-			{
-				std::swap(tyMin, tyMax);
-			}
-
-			if ((tMin > tyMax) || (tyMin > tMax))
-				return false;
-
-			if (tyMin > tMin)
-				tMin = tyMin;
-
-			if (tyMax < tMax)
-				tMax = tyMax;
-
-			float tzMin = (aabb.min_.z - r.origin_.z) / r.direction_.z;
-			float tzMax = (aabb.max_.z - r.origin_.z) / r.direction_.z;
-
-			if (tzMin > tzMax)
-			{
-				std::swap(tzMin, tzMax);
-			}
-
-			if ((tMin > tzMax) || (tzMin > tMax))
-				return false;
-
-			if (tzMin > tMin)
-				tMin = tzMin;
-
-			if (tzMax < tMax)
-				tMax = tzMax;
-
-			return true;
-		}
-
-		bool intersect(const Ray& r, const Triangle& triangle, float& t) const
-		{
-			const glm::vec3 v0v1 = triangle.vertices_[1] - triangle.vertices_[0];
-			const glm::vec3 v0v2 = triangle.vertices_[2] - triangle.vertices_[0];
-			glm::vec3 pVec = glm::cross(r.direction_, v0v2);
-			const float det = glm::dot(v0v1, pVec); 
-
-			if (std::fabs(det) < kEpsilon)
-			{
-				return false;
-			}
-
-			const float invDet = 1.0f / det;
-
-			const glm::vec3 tVec = r.origin_ - triangle.vertices_[0];
-			const float u = glm::dot(tVec,pVec) * invDet;
-			
-			if (u < 0.0f || u > 1.0f)
-			{
-				return false;
-			}
-
-			const glm::vec3 qVec = glm::cross(tVec, v0v1);
-			const float v =  glm::dot(r.direction_, qVec) * invDet;
-			
-			if (v < 0.0f || u + v > 1.0f)
-			{
-				return false;
-			}
-
-			t = glm::dot(v0v2, qVec) * invDet;
-
-			return true;
-		}
+		//Find closesd point on to p on all triangles and distance to that point to p
+		float findMinDistance(glm::vec3 p,  const std::vector<Triangle> triList);
 	};
 }
 

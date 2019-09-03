@@ -60,31 +60,36 @@ namespace RenderAbstractAPI
 		mesh.faces_ = shapes[0].mesh.indices;
 		mesh.normals_ = shapes[0].mesh.normals;
 	
-		//Generate triangles from mesh data and calculate AABB
-		mesh.aabb_.min_.x = mesh.aabb_.max_.x = mesh.vertices_[mesh.faces_[0]];
-		mesh.aabb_.min_.y = mesh.aabb_.max_.y = mesh.vertices_[mesh.faces_[1]];
-		mesh.aabb_.min_.z = mesh.aabb_.max_.z = mesh.vertices_[mesh.faces_[2]];
+		mesh.aabb_.min_.x = mesh.aabb_.min_.y = mesh.aabb_.min_.z = std::numeric_limits<float>::max();
+		mesh.aabb_.max_.x = mesh.aabb_.max_.y = mesh.aabb_.max_.z = -std::numeric_limits<float>::max();
 
-		for (uint32_t i = 3; i < mesh.faces_.size(); i+=3)
+		for (uint32_t i = 0; i < mesh.faces_.size();)
 		{
 			Triangle t;
-			t.vertices_->x = mesh.vertices_[mesh.faces_[i + 0]];
-			t.vertices_->y = mesh.vertices_[mesh.faces_[i + 1]];
-			t.vertices_->z = mesh.vertices_[mesh.faces_[i + 2]];
+			t.vertices_[0].x = mesh.vertices_[mesh.faces_[i + 0] + 0];
+			t.vertices_[0].y = mesh.vertices_[mesh.faces_[i + 0] + 1];
+			t.vertices_[0].z = mesh.vertices_[mesh.faces_[i + 0] + 2];
 
-			t.normal_->x = mesh.normals_[mesh.faces_[i + 0]];
-			t.normal_->y = mesh.normals_[mesh.faces_[i + 1]];
-			t.normal_->z = mesh.normals_[mesh.faces_[i + 2]];
+			t.vertices_[1].x = mesh.vertices_[mesh.faces_[i + 1] + 0];
+			t.vertices_[1].z = mesh.vertices_[mesh.faces_[i + 1] + 2];
 
-			if (t.vertices_->x < mesh.aabb_.min_.x) mesh.aabb_.min_.x = t.vertices_->x;
-			if (t.vertices_->x > mesh.aabb_.max_.x) mesh.aabb_.max_.x = t.vertices_->x;
-			if (t.vertices_->y < mesh.aabb_.min_.y) mesh.aabb_.min_.y = t.vertices_->y;
-			if (t.vertices_->y > mesh.aabb_.max_.y) mesh.aabb_.max_.y = t.vertices_->y;
-			if (t.vertices_->z < mesh.aabb_.min_.z) mesh.aabb_.min_.z = t.vertices_->z;
-			if (t.vertices_->z > mesh.aabb_.max_.z) mesh.aabb_.max_.z = t.vertices_->z;
+			t.vertices_[2].x = mesh.vertices_[mesh.faces_[i + 2] + 0];
+			t.vertices_[2].y = mesh.vertices_[mesh.faces_[i + 2] + 1];
+			t.vertices_[2].z = mesh.vertices_[mesh.faces_[i + 2] + 2];
+
+			i += 3;
+			mesh.aabb_.extendBy(t.vertices_[0]);
+			mesh.aabb_.extendBy(t.vertices_[1]);
+			mesh.aabb_.extendBy(t.vertices_[2]);
+
+
 
 			mesh.triangles_.push_back(t);
 		}
+
+		NoAcclerationStructure na;
+		glm::vec3 p(0.0f);
+		float f = na.findMinDistance(p, mesh.triangles_);
 
 		return true;
     }

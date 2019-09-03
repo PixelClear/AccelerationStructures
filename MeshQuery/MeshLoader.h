@@ -15,6 +15,23 @@
 #include <sstream>
 #include "AcclerationStructures.h"
 
+namespace MeshQuery
+{
+	struct Mesh
+	{
+		std::vector<float> vertices_;
+		std::vector<float> normals_;
+		std::vector<uint32_t> faces_;
+		std::vector<Triangle> triangles_;
+
+		uint32_t indexVbo_;
+		uint32_t vertexVbo_;
+		uint32_t normalVbo_;
+
+		AABB aabb_;
+	}mesh;
+}
+
 namespace tinyobj 
 {
 
