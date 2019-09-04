@@ -10,7 +10,7 @@ using namespace MeshQuery;
 namespace RenderAbstractAPI
 {
 	
-	float cameraZoom = 5.0f;
+	float cameraZoom = 15.0f;
 	float cameraX = 0.0f;
 	glm::mat4 projection;
 	GLuint renderProg;
@@ -66,23 +66,25 @@ namespace RenderAbstractAPI
 		for (uint32_t i = 0; i < mesh.faces_.size();)
 		{
 			Triangle t;
-			t.vertices_[0].x = mesh.vertices_[mesh.faces_[i + 0] + 0];
-			t.vertices_[0].y = mesh.vertices_[mesh.faces_[i + 0] + 1];
-			t.vertices_[0].z = mesh.vertices_[mesh.faces_[i + 0] + 2];
 
-			t.vertices_[1].x = mesh.vertices_[mesh.faces_[i + 1] + 0];
-			t.vertices_[1].z = mesh.vertices_[mesh.faces_[i + 1] + 2];
-
-			t.vertices_[2].x = mesh.vertices_[mesh.faces_[i + 2] + 0];
-			t.vertices_[2].y = mesh.vertices_[mesh.faces_[i + 2] + 1];
-			t.vertices_[2].z = mesh.vertices_[mesh.faces_[i + 2] + 2];
-
+			t.vertices_[0].x = mesh.vertices_[mesh.faces_[i + 0]];
+			t.vertices_[0].y = mesh.vertices_[mesh.faces_[i + 1]];
+			t.vertices_[0].z = mesh.vertices_[mesh.faces_[i + 2]];
 			i += 3;
+
+			t.vertices_[1].x = mesh.vertices_[mesh.faces_[i + 0]];
+			t.vertices_[1].y = mesh.vertices_[mesh.faces_[i + 1]];
+			t.vertices_[1].z = mesh.vertices_[mesh.faces_[i + 2]];
+			i += 3;
+
+			t.vertices_[2].x = mesh.vertices_[mesh.faces_[i + 0]];
+			t.vertices_[2].y = mesh.vertices_[mesh.faces_[i + 1]];
+			t.vertices_[2].z = mesh.vertices_[mesh.faces_[i + 2]];
+			i += 3;
+
 			mesh.aabb_.extendBy(t.vertices_[0]);
 			mesh.aabb_.extendBy(t.vertices_[1]);
 			mesh.aabb_.extendBy(t.vertices_[2]);
-
-
 
 			mesh.triangles_.push_back(t);
 		}
@@ -101,16 +103,16 @@ namespace RenderAbstractAPI
 
 		glGenBuffers(1, &mesh.indexVbo_);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.indexVbo_);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint)* mesh.faces_.size(), mesh.faces_.data(), GL_STATIC_DRAW);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * mesh.faces_.size(), mesh.faces_.data(), GL_STATIC_DRAW);
 
 		glGenBuffers(1, &mesh.vertexVbo_);
 		glBindBuffer(GL_ARRAY_BUFFER, mesh.vertexVbo_);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat)*mesh.vertices_.size(), mesh.vertices_.data(), GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * mesh.vertices_.size(), mesh.vertices_.data(), GL_STATIC_DRAW);
 
 
 		glGenBuffers(1, &mesh.normalVbo_);
 		glBindBuffer(GL_ARRAY_BUFFER, mesh.normalVbo_);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat)*mesh.normals_.size(), mesh.normals_.data(), GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * mesh.normals_.size(), mesh.normals_.data(), GL_STATIC_DRAW);
 
 		glEnableVertexAttribArray(0);
 		glBindBuffer(GL_ARRAY_BUFFER, mesh.vertexVbo_);
@@ -212,7 +214,7 @@ public:
 
 void Callbacks::onInit()
 {
-	std::string asset{ "../Assets/model.obj" };
+	std::string asset{ "../Assets/bsp.obj" };
 
 	if (!RenderAbstractAPI::loadObject(asset))
 	{
