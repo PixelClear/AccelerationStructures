@@ -2,6 +2,7 @@
 #include <glm/glm.hpp>
 #include <vector>
 #include <memory>
+#include <algorithm>
 
 namespace MeshQuery
 {
@@ -101,7 +102,12 @@ namespace MeshQuery
 	{
 		glm::vec3 vertices_[3];
 		glm::vec3 normal_[3];
-		glm::vec3 uv_[3];
+		AABB aabb_;
+
+		bool operator==(const Triangle& rhs)
+		{
+			return vertices_[0] == rhs.vertices_[0] && vertices_[1] == rhs.vertices_[1] && vertices_[2] == rhs.vertices_[2];
+		}
 	};
 
 	class AccelerationStructure
@@ -110,6 +116,15 @@ namespace MeshQuery
 		
 		bool intersect(const Ray& r, const AABB& aabb) const;
 		bool intersect(const Ray& r, const Triangle& triangle, float& t) const;
+		bool intersect(const AABB &a, const AABB &b)
+		{
+			if (a.max_.x < b.min_.x || a.min_.x > b.max_.x) return false; 
+			if (a.max_.y < b.min_.y || a.min_.y > b.max_.y) return false;
+			if (a.max_.z < b.min_.z || a.min_.z > b.max_.z) return false;
+			
+			return true;
+
+		};
 	};
 
 	class NoAcclerationStructure : public AccelerationStructure
@@ -123,10 +138,10 @@ namespace MeshQuery
 		float findMinDistance(glm::vec3 p,  const std::vector<Triangle> triList);
 	};
 
-	struct OctreeNode
+	struct OctreeNode :public AccelerationStructure
 	{
 		static const size_t NUM_CHILDREN = 8;
-		static const size_t DEFAULT_DEPTH = 3;
+		static const size_t DEFAULT_DEPTH = 1;
 		static const size_t DEFAULT_THRESHOLD = 100;
 
 		AABB aabb_;
@@ -163,6 +178,32 @@ namespace MeshQuery
 				node->child_[i]->depth_ = node->depth_ + 1;
 
 				buildTree(node->child_[i].get());
+			}
+		}
+
+		void insertTriangle(OctreeNode* node, Triangle t)
+		{
+			if (node == nullptr)
+			{
+				return;
+			}
+
+			if (node->depth_ >= DEFAULT_DEPTH)
+			{
+				return;
+			}
+
+			for (size_t i = 0; i != NUM_CHILDREN; i++)
+			{
+				if (intersect(t.aabb_, node->child_[i]->aabb_))
+				{
+					node->child_[i]->objectList_.push_back(t);
+
+					if(!node->objectList_.empty())
+					   node->objectList_.erase(std::remove_if(node->objectList_.begin(), node->objectList_.end() - 1, [t](auto temp) { return temp == t; }));
+
+					insertTriangle(node->child_[i].get(), t);
+				}
 			}
 		}
 

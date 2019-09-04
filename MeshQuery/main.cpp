@@ -61,50 +61,60 @@ namespace RenderAbstractAPI
 		mesh.faces_ = shapes[0].mesh.indices;
 		mesh.normals_ = shapes[0].mesh.normals;
 	
+		std::vector<glm::vec3> vert;
+		for (size_t i = 0; i < mesh.vertices_.size(); i += 3)
+		{
+			glm::vec3 v;
+			v.x = mesh.vertices_[i + 0];
+			v.y = mesh.vertices_[i + 1];
+			v.z = mesh.vertices_[i + 2];
+
+			vert.push_back(v);
+		}
+
 		mesh.aabb_.min_.x = mesh.aabb_.min_.y = mesh.aabb_.min_.z = std::numeric_limits<float>::max();
 		mesh.aabb_.max_.x = mesh.aabb_.max_.y = mesh.aabb_.max_.z = -std::numeric_limits<float>::max();
 
-		for (uint32_t i = 0; i < mesh.faces_.size()/9;)
+		for (uint32_t i = 0; i < mesh.faces_.size(); i+=3)
 		{
 			Triangle t;
 
-			t.vertices_[0].x = mesh.vertices_[mesh.faces_[i + 0]];
-			t.vertices_[0].y = mesh.vertices_[mesh.faces_[i + 1]];
-			t.vertices_[0].z = mesh.vertices_[mesh.faces_[i + 2]];
-			i += 3;
-
-			t.vertices_[1].x = mesh.vertices_[mesh.faces_[i + 0]];
-			t.vertices_[1].y = mesh.vertices_[mesh.faces_[i + 1]];
-			t.vertices_[1].z = mesh.vertices_[mesh.faces_[i + 2]];
-			i += 3;
-
-			t.vertices_[2].x = mesh.vertices_[mesh.faces_[i + 0]];
-			t.vertices_[2].y = mesh.vertices_[mesh.faces_[i + 1]];
-			t.vertices_[2].z = mesh.vertices_[mesh.faces_[i + 2]];
-			i += 3;
+			t.vertices_[0] = vert[mesh.faces_[i + 0]];
+			t.vertices_[1] = vert[mesh.faces_[i + 1]];
+			t.vertices_[2] = vert[mesh.faces_[i + 2]];
 
 			mesh.aabb_.extendBy(t.vertices_[0]);
 			mesh.aabb_.extendBy(t.vertices_[1]);
 			mesh.aabb_.extendBy(t.vertices_[2]);
 
+			t.aabb_.extendBy(t.vertices_[0]);
+			t.aabb_.extendBy(t.vertices_[1]);
+			t.aabb_.extendBy(t.vertices_[2]);
+
 			mesh.triangles_.push_back(t);
 		}
-
+		
 		NoAcclerationStructure na;
 		glm::vec3 p(0.0f);
 		float f = na.findMinDistance(p, mesh.triangles_);
 
 		//Adjust AABB
-		mesh.aabb_.min_ = glm::vec3(-2.0f);
-		mesh.aabb_.max_ = glm::vec3(2.0f);
+		mesh.aabb_.min_ = glm::vec3(-6.0f);
+		mesh.aabb_.max_ = glm::vec3(6.0f);
 	
 		Octree oc;
 
 		root = std::make_unique<OctreeNode>();
 		root->aabb_ = mesh.aabb_;
 		root->depth_ = 0;
-		
+		root->objectList_ = mesh.triangles_;
+
 		oc.buildTree(root.get());
+
+		for (auto t : root->objectList_)
+		{
+			oc.insertTriangle(root.get(), t);
+		}
 
 		return true;
     }
@@ -227,7 +237,7 @@ public:
 
 void Callbacks::onInit()
 {
-	std::string asset{ "../Assets/model.obj" };
+	std::string asset{ "../Assets/bsp.obj" };
 
 	if (!RenderAbstractAPI::loadObject(asset))
 	{

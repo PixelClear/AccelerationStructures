@@ -1,6 +1,6 @@
 ﻿  AcclerationStructures.cpp
-c:\users\pariku\source\repos\meshquery\meshquery\acclerationstructures.h(8): warning C4305: 'initializing': truncation from 'double' to 'const float'
+c:\users\pariku\source\repos\meshquery\meshquery\acclerationstructures.h(9): warning C4305: 'initializing': truncation from 'double' to 'const float'
   main.cpp
-c:\users\pariku\source\repos\meshquery\meshquery\acclerationstructures.h(8): warning C4305: 'initializing': truncation from 'double' to 'const float'
+c:\users\pariku\source\repos\meshquery\meshquery\acclerationstructures.h(9): warning C4305: 'initializing': truncation from 'double' to 'const float'
   Generating Code...
   MeshQuery.vcxproj -> C:\Users\pariku\source\repos\MeshQuery\x64\Debug\MeshQuery.exe
