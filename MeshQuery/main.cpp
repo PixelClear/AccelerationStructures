@@ -79,6 +79,9 @@ namespace RenderAbstractAPI
 		{
 			Triangle t;
 
+			t.aabb_.min_.x = t.aabb_.min_.y = t.aabb_.min_.z = std::numeric_limits<float>::max();
+			t.aabb_.max_.x = t.aabb_.max_.y = t.aabb_.max_.z = -std::numeric_limits<float>::max();
+
 			t.vertices_[0] = vert[mesh.faces_[i + 0]];
 			t.vertices_[1] = vert[mesh.faces_[i + 1]];
 			t.vertices_[2] = vert[mesh.faces_[i + 2]];
@@ -87,6 +90,10 @@ namespace RenderAbstractAPI
 			mesh.aabb_.extendBy(t.vertices_[1]);
 			mesh.aabb_.extendBy(t.vertices_[2]);
 
+			auto t1 = t.vertices_[0];
+			auto t2 = t.vertices_[1];
+			auto t3 = t.vertices_[2];
+
 			t.aabb_.extendBy(t.vertices_[0]);
 			t.aabb_.extendBy(t.vertices_[1]);
 			t.aabb_.extendBy(t.vertices_[2]);
@@ -94,13 +101,13 @@ namespace RenderAbstractAPI
 			mesh.triangles_.push_back(t);
 		}
 		
-		NoAcclerationStructure na;
+	/*	NoAcclerationStructure na;
 		glm::vec3 p(0.0f);
-		float f = na.findMinDistance(p, mesh.triangles_);
+		float f = na.findMinDistance(p, mesh.triangles_);*/
 
 		//Adjust AABB
-		mesh.aabb_.min_ = glm::vec3(-6.0f);
-		mesh.aabb_.max_ = glm::vec3(6.0f);
+		mesh.aabb_.min_ = glm::vec3(-2.0f);
+		mesh.aabb_.max_ = glm::vec3(2.0f);
 	
 		Octree oc;
 
@@ -237,7 +244,7 @@ public:
 
 void Callbacks::onInit()
 {
-	std::string asset{ "../Assets/bsp.obj" };
+	std::string asset{ "../Assets/model.obj" };
 
 	if (!RenderAbstractAPI::loadObject(asset))
 	{
@@ -290,11 +297,11 @@ void print(OctreeNode* node)
 	float white[] = { 1.0f, 1.0f, 1.0f, 1.0f };
 	for (int i = 0; i < 8; i++)
 	{
-		if (node->child_[i] != nullptr)
+		if (node->child_[i] != nullptr && node->child_[i]->objectList_.size())
 		{
 			add_gl_db_aabb(&node->child_[i]->aabb_.min_[0], &node->child_[i]->aabb_.max_[0], white);
 		}
-
+		
 		print(node->child_[i].get());
 	}
 }
