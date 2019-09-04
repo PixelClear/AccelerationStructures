@@ -10,7 +10,7 @@ using namespace MeshQuery;
 namespace RenderAbstractAPI
 {
 	
-	float cameraZoom = 15.0f;
+	float cameraZoom = 8.0f;
 	float cameraX = 0.0f;
 	glm::mat4 projection;
 	GLuint renderProg;
@@ -18,6 +18,7 @@ namespace RenderAbstractAPI
 	GLuint viewLocation;
 	GLuint projectionLocation;
 	GLuint VAO;
+	std::unique_ptr<OctreeNode> root;
 
 	bool ReadFile(const char* pFileName, std::string& outFile)
 	{
@@ -63,7 +64,7 @@ namespace RenderAbstractAPI
 		mesh.aabb_.min_.x = mesh.aabb_.min_.y = mesh.aabb_.min_.z = std::numeric_limits<float>::max();
 		mesh.aabb_.max_.x = mesh.aabb_.max_.y = mesh.aabb_.max_.z = -std::numeric_limits<float>::max();
 
-		for (uint32_t i = 0; i < mesh.faces_.size();)
+		for (uint32_t i = 0; i < mesh.faces_.size()/9;)
 		{
 			Triangle t;
 
@@ -92,6 +93,18 @@ namespace RenderAbstractAPI
 		NoAcclerationStructure na;
 		glm::vec3 p(0.0f);
 		float f = na.findMinDistance(p, mesh.triangles_);
+
+		//Adjust AABB
+		mesh.aabb_.min_ = glm::vec3(-2.0f);
+		mesh.aabb_.max_ = glm::vec3(2.0f);
+	
+		Octree oc;
+
+		root = std::make_unique<OctreeNode>();
+		root->aabb_ = mesh.aabb_;
+		root->depth_ = 0;
+		
+		oc.buildTree(root.get());
 
 		return true;
     }
@@ -214,7 +227,7 @@ public:
 
 void Callbacks::onInit()
 {
-	std::string asset{ "../Assets/bsp.obj" };
+	std::string asset{ "../Assets/model.obj" };
 
 	if (!RenderAbstractAPI::loadObject(asset))
 	{
@@ -259,6 +272,23 @@ void Callbacks::onViewportSizeChanged(int w, int h)
     RenderAbstractAPI::projection = glm::perspective(45.0f, w / (float)h, 1.f, 1000.0f);
 }
 
+void print(OctreeNode* node)
+{
+	if (node == nullptr)
+		return;
+
+	float white[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+	for (int i = 0; i < 8; i++)
+	{
+		if (node->child_[i] != nullptr)
+		{
+			add_gl_db_aabb(&node->child_[i]->aabb_.min_[0], &node->child_[i]->aabb_.max_[0], white);
+		}
+
+		print(node->child_[i].get());
+	}
+}
+
 void Callbacks::onRenderFrame(double deltaTime)
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -285,6 +315,9 @@ void Callbacks::onRenderFrame(double deltaTime)
 
 	add_gl_db_aabb(&mesh.aabb_.min_[0], &mesh.aabb_.max_[0], white);
 	update_gl_db_cam_mat(&mvp[0][0]);
+
+	print(RenderAbstractAPI::root.get());
+
 	draw_gl_db(false);
 #endif
 }

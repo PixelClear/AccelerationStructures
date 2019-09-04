@@ -1,6 +1,7 @@
 #pragma once
 #include <glm/glm.hpp>
 #include <vector>
+#include <memory>
 
 namespace MeshQuery
 {
@@ -120,6 +121,87 @@ namespace MeshQuery
 
 		//Find closesd point on to p on all triangles and distance to that point to p
 		float findMinDistance(glm::vec3 p,  const std::vector<Triangle> triList);
+	};
+
+	struct OctreeNode
+	{
+		static const size_t NUM_CHILDREN = 8;
+		static const size_t DEFAULT_DEPTH = 3;
+		static const size_t DEFAULT_THRESHOLD = 100;
+
+		AABB aabb_;
+		int depth_;
+		bool isLeaf_;
+		OctreeNode* parent_;
+		std::unique_ptr<OctreeNode> child_[NUM_CHILDREN];
+		std::vector<Triangle> objectList_;
+	};
+
+	class Octree : public OctreeNode
+	{
+	public:
+		
+		void buildTree(OctreeNode* node)
+		{
+			for (size_t i = 0; i != NUM_CHILDREN; i++)
+			{
+				node->child_[i] = nullptr;
+			}
+
+			if (node->depth_ >= DEFAULT_DEPTH)
+			{
+				return;
+			}
+
+			for (size_t i = 0; i != NUM_CHILDREN; i++)
+			{
+				node->child_[i] = std::make_unique<OctreeNode>();
+				const AABB ChildBox = GetOctaSplit(node->aabb_, i);
+
+				node->child_[i]->parent_ = node;
+				node->child_[i]->aabb_ = ChildBox;
+				node->child_[i]->depth_ = node->depth_ + 1;
+
+				buildTree(node->child_[i].get());
+			}
+		}
+
+		AABB GetOctaSplit(const AABB& B, size_t Idx)
+		{
+#define x0 B.min_.x
+#define x1 B.max_.x
+#define y0 B.min_.y
+#define y1 B.max_.y
+#define z0 B.min_.z
+#define z1 B.max_.z
+#define xc ((B.min_.x+B.max_.x) * 0.5f)
+#define yc ((B.min_.y+B.max_.y) * 0.5f)
+#define zc ((B.min_.z+B.max_.z) * 0.5f)
+			switch (Idx & 7)
+			{
+			case 0: return AABB(glm::vec3(x0, yc, z0), glm::vec3(xc, y1, zc));
+			case 1: return AABB(glm::vec3(xc, yc, z0), glm::vec3(x1, y1, zc));
+			case 2: return AABB(glm::vec3(xc, y0, z0), glm::vec3(x1, yc, zc));
+			case 3: return AABB(glm::vec3(x0, y0, z0), glm::vec3(xc, yc, zc));
+			case 4: return AABB(glm::vec3(x0, yc, zc), glm::vec3(xc, y1, z1));
+			case 5: return AABB(glm::vec3(xc, yc, zc), glm::vec3(x1, y1, z1));
+			case 6: return AABB(glm::vec3(xc, y0, zc), glm::vec3(x1, yc, z1));
+			case 7: return AABB(glm::vec3(x0, y0, zc), glm::vec3(xc, yc, z1));
+			}
+
+			return B;
+#undef x0
+#undef x1
+#undef y0
+#undef y1
+#undef z0
+#undef z1
+#undef xc
+#undef yc
+#undef zc
+		}
+
+		
 	};
 }
 
