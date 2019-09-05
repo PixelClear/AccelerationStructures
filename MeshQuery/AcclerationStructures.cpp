@@ -176,6 +176,9 @@ float MeshQuery::NoAcclerationStructure::findMinDistance(glm::vec3 p, const std:
 	std::vector<float> distance;
 	glm::vec3 closestPoint;
 
+	if(triList.size() == 0)
+		return std::numeric_limits<float>::max();
+
 	for (auto t : triList)
 	{
 		getClosestPoint(p, t, closestPoint);
@@ -200,27 +203,48 @@ float MeshQuery::NoAcclerationStructure::SqDistPointAABB(glm::vec3 p, AABB b)
 	return sqDist;
 }
 
-float MeshQuery::NoAcclerationStructure::findMinDistance(glm::vec3 p, OctreeNode * root)
+float MeshQuery::NoAcclerationStructure::findMinDistance(glm::vec3 p, OctreeNode * node)
 {
-	OctreeNode* node = root;
-	while (node != nullptr && node->depth_ <= OctreeNode::DEFAULT_DEPTH)
+	std::vector<float> distance;
+	std::vector<float> distToTri;
+
+	if (node == nullptr)
 	{
-		std::vector<float> distance;
-
-		for (uint32_t i = 0; i < OctreeNode::NUM_CHILDREN; i++)
-		{
-			distance.push_back(SqDistPointAABB(p, node->child_[i]->aabb_));
-		}
-
-		const auto index = std::distance(distance.begin(), std::min_element(distance.begin(), distance.end(), [](float a, float b) {return (a < b); }));
-		node = node->child_[index].get();
-
-		//store distance value processed 
-		// remove it from distance vector
-		//if removed value is same as stored value we
-		if (node->isLeaf_)
-			break;
+		return std::numeric_limits<float>::max();
 	}
 
-	return findMinDistance(p, node->objectList_);
+	if (node->depth_ > OctreeNode::DEFAULT_DEPTH)
+	{
+		return std::numeric_limits<float>::max();
+	}
+
+	if (node->isLeaf_)
+	{
+		return findMinDistance(p, node->objectList_);
+	}
+
+	distance.clear();
+
+	for (uint32_t i = 0; i < OctreeNode::NUM_CHILDREN; i++)
+	{
+		distance.push_back(SqDistPointAABB(p, node->child_[i]->aabb_));
+	}
+
+	auto index = std::distance(distance.begin(), std::min_element(distance.begin(), distance.end(), [](float a, float b) {return (a < b); }));
+	auto savedDistance = distance[index];
+
+	for (uint32_t i = 0; i < OctreeNode::NUM_CHILDREN; i++)
+	{
+		float f = findMinDistance(p, node->child_[index].get());
+		distance[index] = std::numeric_limits<float>::max();
+		distToTri.push_back(f);
+
+		index = std::distance(distance.begin(), std::min_element(distance.begin(), distance.end(), [](float a, float b) {return (a < b); }));
+		if (distance[index] != savedDistance && f != std::numeric_limits<float>::max())
+			break;
+
+		savedDistance = distance[index];
+	}
+
+	return *std::min_element(distToTri.begin(), distToTri.end(), [](float a, float b) {return (a < b); });
 }

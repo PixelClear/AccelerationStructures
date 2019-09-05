@@ -1,6 +1,8 @@
 
 #include <glew/glew.h>
 #include <glm/ext.hpp>
+#include <iostream>
+
 #include "SDLCallbacks.h"
 #include "ApplicationDriver.h"
 #include "MeshLoader.h"
@@ -19,6 +21,7 @@ namespace RenderAbstractAPI
 	GLuint projectionLocation;
 	GLuint VAO;
 	std::unique_ptr<OctreeNode> root;
+	size_t objectSize = 0;
 
 	bool ReadFile(const char* pFileName, std::string& outFile)
 	{
@@ -101,9 +104,17 @@ namespace RenderAbstractAPI
 			mesh.triangles_.push_back(t);
 		}
 		
+		using milisec = std::chrono::milliseconds;
+		using seconds = std::chrono::seconds;
+		
+
 	    NoAcclerationStructure na;
-		glm::vec3 p(-1.0f);
+		glm::vec3 p(-8.0f);
+
+		auto t1 = std::chrono::time_point_cast<milisec>(std::chrono::high_resolution_clock::now());
 		float f = na.findMinDistance(p, mesh.triangles_);
+		auto t2 = std::chrono::time_point_cast<milisec>(std::chrono::high_resolution_clock::now());
+		const auto timeForNaiveMethod = std::chrono::duration<double>(t2 - t1).count();
 
 		//Adjust AABB
 		mesh.aabb_.min_ = glm::vec3(-2.0f);
@@ -124,7 +135,16 @@ namespace RenderAbstractAPI
 			oc.insertTriangle(root.get(), t);
 		}
 
-	    float x = na.findMinDistance(p, root.get());
+		const auto t3 = std::chrono::time_point_cast<milisec>(std::chrono::high_resolution_clock::now());
+		float x = na.findMinDistance(p, root.get());
+		const auto t4 = std::chrono::time_point_cast<milisec>(std::chrono::high_resolution_clock::now());
+		const auto timeForOctreeMethod = std::chrono::duration<double>(t4 - t3).count();
+		
+		std::ofstream myfile;
+		myfile.open("timings.txt");
+		myfile << "timeForNaiveMethod :: " << timeForNaiveMethod << std::endl;
+		myfile << "timeForOctreeMethod :: " << timeForOctreeMethod << std::endl;
+		myfile.close();
 
 		return true;
     }
@@ -303,6 +323,7 @@ void print(OctreeNode* node)
 		if (node->child_[i] != nullptr && node->child_[i]->objectList_.size())
 		{
 			add_gl_db_aabb(&node->child_[i]->aabb_.min_[0], &node->child_[i]->aabb_.max_[0], white);
+			RenderAbstractAPI::objectSize += node->child_[i]->objectList_.size();
 		}
 		
 		print(node->child_[i].get());
@@ -336,9 +357,14 @@ void Callbacks::onRenderFrame(double deltaTime)
 	add_gl_db_aabb(&mesh.aabb_.min_[0], &mesh.aabb_.max_[0], white);
 	update_gl_db_cam_mat(&mvp[0][0]);
 
+	RenderAbstractAPI::objectSize = 0;
 	print(RenderAbstractAPI::root.get());
 
+	const auto temp = RenderAbstractAPI::objectSize;
+
 	draw_gl_db(false);
+
+
 #endif
 }
 

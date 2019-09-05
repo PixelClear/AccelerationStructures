@@ -1,0 +1,2 @@
+timeForNaiveMethod :: 0.044
+timeForOctreeMethod :: 0.001

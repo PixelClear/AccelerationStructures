@@ -6,7 +6,7 @@
 
 namespace MeshQuery
 {
-	constexpr float kEpsilon = 1e-8;
+	constexpr double kEpsilon = 1e-8;
 	
 	class Ray
 	{
@@ -127,7 +127,7 @@ namespace MeshQuery
 		};
 	};
 
-	class OctreeNode;
+	struct OctreeNode;
 
 	class NoAcclerationStructure : public AccelerationStructure
 	{
@@ -151,7 +151,7 @@ namespace MeshQuery
 	struct OctreeNode :public AccelerationStructure
 	{
 		static const size_t NUM_CHILDREN = 8;
-		static const size_t DEFAULT_DEPTH = 1;
+		static const size_t DEFAULT_DEPTH = 3;
 		static const size_t DEFAULT_THRESHOLD = 100;
 
 		AABB aabb_;
