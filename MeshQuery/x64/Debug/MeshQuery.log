@@ -1,3 +1,5 @@
 ﻿  main.cpp
 c:\users\pariku\source\repos\meshquery\meshquery\acclerationstructures.h(9): warning C4305: 'initializing': truncation from 'double' to 'const float'
+c:\users\pariku\source\repos\meshquery\meshquery\acclerationstructures.h(151): warning C4099: 'MeshQuery::OctreeNode': type name first seen using 'class' now seen using 'struct'
+  c:\users\pariku\source\repos\meshquery\meshquery\acclerationstructures.h(151): note: see declaration of 'MeshQuery::OctreeNode'
   MeshQuery.vcxproj -> C:\Users\pariku\source\repos\MeshQuery\x64\Debug\MeshQuery.exe

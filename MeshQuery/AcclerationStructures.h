@@ -127,21 +127,31 @@ namespace MeshQuery
 		};
 	};
 
+	class OctreeNode;
+
 	class NoAcclerationStructure : public AccelerationStructure
 	{
 	public:
 
 	    //Get closest point on triangle
-		void getClosestPointOnTri(glm::vec3 p, Triangle t, glm::vec3& closestPoint);
+		void getClosestPoint(glm::vec3 p, Triangle t, glm::vec3& closestPoint);
 
-		//Find closesd point on to p on all triangles and distance to that point to p
+		//Get closest point on AABB
+		void getClosestPoint(glm::vec3 p, const AABB t, glm::vec3& closestPoint);
+
+		//Find closesd point on to p on all triangles and distance to that point 
 		float findMinDistance(glm::vec3 p,  const std::vector<Triangle> triList);
+
+		//Find closesd point to AABB and distance to that point
+		float findMinDistance(glm::vec3 p, OctreeNode* root);
+
+		float SqDistPointAABB(glm::vec3 p, AABB b);
 	};
 
 	struct OctreeNode :public AccelerationStructure
 	{
 		static const size_t NUM_CHILDREN = 8;
-		static const size_t DEFAULT_DEPTH = 3;
+		static const size_t DEFAULT_DEPTH = 1;
 		static const size_t DEFAULT_THRESHOLD = 100;
 
 		AABB aabb_;
@@ -165,6 +175,7 @@ namespace MeshQuery
 
 			if (node->depth_ >= DEFAULT_DEPTH)
 			{
+				node->isLeaf_ = true;
 				return;
 			}
 
@@ -176,6 +187,7 @@ namespace MeshQuery
 				node->child_[i]->parent_ = node;
 				node->child_[i]->aabb_ = ChildBox;
 				node->child_[i]->depth_ = node->depth_ + 1;
+				node->isLeaf_ = false;
 
 				buildTree(node->child_[i].get());
 			}

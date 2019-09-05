@@ -83,7 +83,7 @@ bool MeshQuery::AccelerationStructure::intersect(const Ray & r, const Triangle &
 	return true;
 }
 
-void MeshQuery::NoAcclerationStructure::getClosestPointOnTri(glm::vec3 p, Triangle t, glm::vec3& closestPoint)
+void MeshQuery::NoAcclerationStructure::getClosestPoint(glm::vec3 p, Triangle t, glm::vec3& closestPoint)
 {
 	glm::vec3 ab = t.vertices_[1] - t.vertices_[0];
 	glm::vec3 ac = t.vertices_[2] - t.vertices_[0];
@@ -149,6 +149,28 @@ void MeshQuery::NoAcclerationStructure::getClosestPointOnTri(glm::vec3 p, Triang
 	return;
 }
 
+void MeshQuery::NoAcclerationStructure::getClosestPoint(glm::vec3 p, const AABB aabb, glm::vec3 & closestPoint)
+{
+	for (int i = 0; i < 3; i++)
+	{
+		float v = p[i];
+		
+		const auto x = aabb.min_[i];
+		const auto y = aabb.max_[i];
+
+		if (v < aabb.min_[i])
+		{
+			v = aabb.min_[i];
+		}
+		if (v > aabb.max_[i])
+		{
+			v = aabb.max_[i];
+		}
+
+		closestPoint[i] = v;
+	}
+}
+
 float MeshQuery::NoAcclerationStructure::findMinDistance(glm::vec3 p, const std::vector<Triangle> triList)
 {
 	std::vector<float> distance;
@@ -156,9 +178,49 @@ float MeshQuery::NoAcclerationStructure::findMinDistance(glm::vec3 p, const std:
 
 	for (auto t : triList)
 	{
-		getClosestPointOnTri(p, t, closestPoint);
+		getClosestPoint(p, t, closestPoint);
 		distance.push_back(glm::distance(p, closestPoint));
 	}
 
 	return *std::min_element(distance.begin(), distance.end(), [](float a, float b) {return (a < b); });
+}
+
+float MeshQuery::NoAcclerationStructure::SqDistPointAABB(glm::vec3 p, AABB b)
+{
+	float sqDist = 0.0f;
+
+	for (int i = 0; i < 3; i++) 
+	{ 
+		// For each axis count any excess distance outside box extents 
+		float v = p[i]; 
+		if (v < b.min_[i]) sqDist += (b.min_[i] - v) * (b.min_[i] - v); 
+		if (v > b.max_[i]) sqDist += (v - b.max_[i]) * (v - b.max_[i]); 
+	}
+
+	return sqDist;
+}
+
+float MeshQuery::NoAcclerationStructure::findMinDistance(glm::vec3 p, OctreeNode * root)
+{
+	OctreeNode* node = root;
+	while (node != nullptr && node->depth_ <= OctreeNode::DEFAULT_DEPTH)
+	{
+		std::vector<float> distance;
+
+		for (uint32_t i = 0; i < OctreeNode::NUM_CHILDREN; i++)
+		{
+			distance.push_back(SqDistPointAABB(p, node->child_[i]->aabb_));
+		}
+
+		const auto index = std::distance(distance.begin(), std::min_element(distance.begin(), distance.end(), [](float a, float b) {return (a < b); }));
+		node = node->child_[index].get();
+
+		//store distance value processed 
+		// remove it from distance vector
+		//if removed value is same as stored value we
+		if (node->isLeaf_)
+			break;
+	}
+
+	return findMinDistance(p, node->objectList_);
 }

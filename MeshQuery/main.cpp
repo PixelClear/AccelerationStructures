@@ -101,9 +101,9 @@ namespace RenderAbstractAPI
 			mesh.triangles_.push_back(t);
 		}
 		
-	/*	NoAcclerationStructure na;
-		glm::vec3 p(0.0f);
-		float f = na.findMinDistance(p, mesh.triangles_);*/
+	    NoAcclerationStructure na;
+		glm::vec3 p(-1.0f);
+		float f = na.findMinDistance(p, mesh.triangles_);
 
 		//Adjust AABB
 		mesh.aabb_.min_ = glm::vec3(-2.0f);
@@ -115,6 +115,7 @@ namespace RenderAbstractAPI
 		root->aabb_ = mesh.aabb_;
 		root->depth_ = 0;
 		root->objectList_ = mesh.triangles_;
+		root->isLeaf_ = false;
 
 		oc.buildTree(root.get());
 
@@ -122,6 +123,8 @@ namespace RenderAbstractAPI
 		{
 			oc.insertTriangle(root.get(), t);
 		}
+
+	    float x = na.findMinDistance(p, root.get());
 
 		return true;
     }
