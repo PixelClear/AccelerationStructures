@@ -13,7 +13,7 @@
 #include <string.h> // memset
 #include <math.h>
 #ifndef M_PI
-#define M_PI 3.14159265358979323846
+#define M_PI 3.14159265358979323846f
 #endif
 
 // current num of debug lines in buffer
@@ -318,43 +318,43 @@ int add_gl_db_rad_circle(float* centre_xyz, float radius,
 	int segs = 12;
 	// x,y around z loop
 	for (int i = 0; i < segs; i++) {
-		start[0] = centre_xyz[0] + radius * cos(
+		start[0] = centre_xyz[0] + radius * cosf(
 			2.0f * M_PI * (float)i / (float)segs);
-		start[1] = centre_xyz[1] + radius * sin(
+		start[1] = centre_xyz[1] + radius * sinf(
 			2.0f * M_PI * (float)i / (float)segs);
 		start[2] = centre_xyz[2];
-		end[0] = centre_xyz[0] + radius * cos(
+		end[0] = centre_xyz[0] + radius * cosf(
 			2.0f * M_PI * (float)(i + 1) / (float)segs);
-		end[1] = centre_xyz[1] + radius * sin(
+		end[1] = centre_xyz[1] + radius * sinf(
 			2.0f * M_PI * (float)(i + 1) / (float)segs);
 		end[2] = centre_xyz[2];
 		add_gl_db_line(start, end, colour_rgba);
 	}
 	// x,z around y loop
 	for (int i = 0; i < segs; i++) {
-		start[0] = centre_xyz[0] + radius * cos(
+		start[0] = centre_xyz[0] + radius * cosf(
 			2.0f * M_PI * (float)i / (float)segs);
 		start[1] = centre_xyz[1];
-		start[2] = centre_xyz[2] + radius * sin(
+		start[2] = centre_xyz[2] + radius * sinf(
 			2.0f * M_PI * (float)i / (float)segs);
-		end[0] = centre_xyz[0] + radius * cos(
+		end[0] = centre_xyz[0] + radius * cosf(
 			2.0f * M_PI * (float)(i + 1) / (float)segs);
 		end[1] = centre_xyz[1];
-		end[2] = centre_xyz[2] + radius * sin(
+		end[2] = centre_xyz[2] + radius * sinf(
 			2.0f * M_PI * (float)(i + 1) / (float)segs);
 		add_gl_db_line(start, end, colour_rgba);
 	}
 	// y,z around xloop
 	for (int i = 0; i < segs; i++) {
 		start[0] = centre_xyz[0];
-		start[1] = centre_xyz[1] + radius * cos(
+		start[1] = centre_xyz[1] + radius * cosf(
 			2.0f * M_PI * (float)i / (float)segs);
-		start[2] = centre_xyz[2] + radius * sin(
+		start[2] = centre_xyz[2] + radius * sinf(
 			2.0f * M_PI * (float)i / (float)segs);
 		end[0] = centre_xyz[0];
-		end[1] = centre_xyz[1] + radius * cos(
+		end[1] = centre_xyz[1] + radius * cosf(
 			2.0f * M_PI * (float)(i + 1) / (float)segs);
-		end[2] = centre_xyz[2] + radius * sin(
+		end[2] = centre_xyz[2] + radius * sinf(
 			2.0f * M_PI * (float)(i + 1) / (float)segs);
 		add_gl_db_line(start, end, colour_rgba);
 	}
