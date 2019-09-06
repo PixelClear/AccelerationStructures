@@ -140,10 +140,10 @@ namespace MeshQuery
 		void getClosestPoint(glm::vec3 p, const AABB t, glm::vec3& closestPoint);
 
 		//Find closesd point on to p on all triangles and distance to that point 
-		float findMinDistance(glm::vec3 p,  const std::vector<Triangle> triList);
+		std::pair<glm::vec3, float> getClosestPoint(glm::vec3 p,  const std::vector<Triangle> triList);
 
 		//Find closesd point to AABB and distance to that point
-		float findMinDistance(glm::vec3 p, OctreeNode* root);
+		std::pair<glm::vec3, float> getClosestPoint(glm::vec3 p, OctreeNode* root);
 
 		float SqDistPointAABB(glm::vec3 p, AABB b);
 	};
@@ -151,7 +151,7 @@ namespace MeshQuery
 	struct OctreeNode :public AccelerationStructure
 	{
 		static const size_t NUM_CHILDREN = 8;
-		static const size_t DEFAULT_DEPTH = 3;
+		static const size_t DEFAULT_DEPTH = 1;
 		static const size_t DEFAULT_THRESHOLD = 100;
 
 		AABB aabb_;

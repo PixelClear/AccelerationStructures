@@ -135,6 +135,7 @@
     <ClInclude Include="ApplicationDriver.h" />
     <ClInclude Include="DebugOgl.h" />
     <ClInclude Include="MeshLoader.h" />
+    <ClInclude Include="RenderAbstractAPI.h" />
     <ClInclude Include="SDLCallbacks.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="DebuggingCode">
+      <UniqueIdentifier>{115e5a1d-bde5-4505-bbb2-836df9118b84}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -21,11 +24,11 @@
     <ClCompile Include="ApplicationDriver.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="DebugOgl.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="AcclerationStructures.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DebugOgl.cpp">
+      <Filter>DebuggingCode</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -35,11 +38,14 @@
     <ClInclude Include="ApplicationDriver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="MeshLoader.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="RenderAbstractAPI.h">
+      <Filter>DebuggingCode</Filter>
     </ClInclude>
     <ClInclude Include="DebugOgl.h">
-      <Filter>Header Files</Filter>
+      <Filter>DebuggingCode</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshLoader.h">
+      <Filter>DebuggingCode</Filter>
     </ClInclude>
     <ClInclude Include="AcclerationStructures.h">
       <Filter>Header Files</Filter>

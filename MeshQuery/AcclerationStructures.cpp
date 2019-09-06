@@ -171,22 +171,22 @@ void MeshQuery::NoAcclerationStructure::getClosestPoint(glm::vec3 p, const AABB 
 	}
 }
 
-float MeshQuery::NoAcclerationStructure::findMinDistance(glm::vec3 p, const std::vector<Triangle> triList)
+std::pair<glm::vec3, float> MeshQuery::NoAcclerationStructure::getClosestPoint(glm::vec3 p, const std::vector<Triangle> triList)
 {
-	std::vector<float> distance;
 	glm::vec3 closestPoint;
+	std::vector<std::pair<glm::vec3, float>> distance;
 
 	if(triList.size() == 0)
-		return std::numeric_limits<float>::max();
+		return std::make_pair(glm::vec3(0.0f), std::numeric_limits<float>::max());
 
 	for (auto t : triList)
 	{
 		getClosestPoint(p, t, closestPoint);
-		distance.push_back(glm::distance(p, closestPoint));
+		distance.push_back(std::make_pair(closestPoint, glm::distance(p, closestPoint)));
 	}
 
-	return *std::min_element(distance.begin(), distance.end(), [](float a, float b) {return (a < b); });
-}
+	return *std::min_element(distance.begin(), distance.end(), [](const auto a, const auto b) {return (a.second < b.second); });
+ }
 
 float MeshQuery::NoAcclerationStructure::SqDistPointAABB(glm::vec3 p, AABB b)
 {
@@ -203,24 +203,24 @@ float MeshQuery::NoAcclerationStructure::SqDistPointAABB(glm::vec3 p, AABB b)
 	return sqDist;
 }
 
-float MeshQuery::NoAcclerationStructure::findMinDistance(glm::vec3 p, OctreeNode * node)
+std::pair<glm::vec3, float> MeshQuery::NoAcclerationStructure::getClosestPoint(glm::vec3 p, OctreeNode * node)
 {
 	std::vector<float> distance;
-	std::vector<float> distToTri;
+	std::vector<std::pair<glm::vec3, float>> distToTri;
 
 	if (node == nullptr)
 	{
-		return std::numeric_limits<float>::max();
+		return std::make_pair(glm::vec3(0.0f), std::numeric_limits<float>::max());
 	}
 
 	if (node->depth_ > OctreeNode::DEFAULT_DEPTH)
 	{
-		return std::numeric_limits<float>::max();
+		return std::make_pair(glm::vec3(0.0f), std::numeric_limits<float>::max());
 	}
 
 	if (node->isLeaf_)
 	{
-		return findMinDistance(p, node->objectList_);
+		return getClosestPoint(p, node->objectList_);
 	}
 
 	distance.clear();
@@ -235,16 +235,16 @@ float MeshQuery::NoAcclerationStructure::findMinDistance(glm::vec3 p, OctreeNode
 
 	for (uint32_t i = 0; i < OctreeNode::NUM_CHILDREN; i++)
 	{
-		float f = findMinDistance(p, node->child_[index].get());
+		auto pair = getClosestPoint(p, node->child_[index].get());
 		distance[index] = std::numeric_limits<float>::max();
-		distToTri.push_back(f);
+		distToTri.push_back(pair);
 
 		index = std::distance(distance.begin(), std::min_element(distance.begin(), distance.end(), [](float a, float b) {return (a < b); }));
-		if (distance[index] != savedDistance && f != std::numeric_limits<float>::max())
+		if (distance[index] != savedDistance && pair.second != std::numeric_limits<float>::max())
 			break;
 
 		savedDistance = distance[index];
 	}
 
-	return *std::min_element(distToTri.begin(), distToTri.end(), [](float a, float b) {return (a < b); });
+	return *min_element(distToTri.begin(), distToTri.end(), [](const auto a, const auto b) {return (a.second < b.second); });
 }

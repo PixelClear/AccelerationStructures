@@ -1,0 +1,5 @@
+Point p :: (-8,-8,-8)
+ClosestPoint q :: (-8,-8,-8)
+timeForNaiveMethod :: 4.966
+timeForNaiveMethod :: 4.966
+timeForOctreeMethod :: 0.016
