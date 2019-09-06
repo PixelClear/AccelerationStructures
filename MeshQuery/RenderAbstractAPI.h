@@ -15,8 +15,6 @@ namespace RenderAbstractAPI
 	GLuint projectionLocation;
 	GLuint VAO;
 	
-	size_t objectSize = 0;
-
 	bool ReadFile(const char* pFileName, std::string& outFile)
 	{
 		std::ifstream f(pFileName);

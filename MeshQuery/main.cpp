@@ -42,9 +42,10 @@ void Callbacks::onInit()
 
 #if _DEBUG
 	init_gl_db();
-	
 #endif
-	NoAcclerationStructure na;
+
+	//Implementation without any Acceleration structure
+	NoAccelerationStructure na;
 	glm::vec3 p(-8.0f);
 
 	auto t1 = std::chrono::time_point_cast<milisec>(std::chrono::high_resolution_clock::now());
@@ -52,8 +53,8 @@ void Callbacks::onInit()
 	auto t2 = std::chrono::time_point_cast<milisec>(std::chrono::high_resolution_clock::now());
 	const auto timeForNaiveMethod = std::chrono::duration<double>(t2 - t1).count();
 	
+	//Implementation with Octree
 	Octree oc;
-
 	root = std::make_unique<OctreeNode>();
 	root->aabb_ = mesh.aabb_;
 	root->depth_ = 0;
@@ -68,15 +69,17 @@ void Callbacks::onInit()
 	}
 
 	const auto t3 = std::chrono::time_point_cast<milisec>(std::chrono::high_resolution_clock::now());
-	const auto ocPair = na.getClosestPoint(p, root.get());
+	const auto ocPair = oc.getClosestPoint(p, root.get());
 	const auto t4 = std::chrono::time_point_cast<milisec>(std::chrono::high_resolution_clock::now());
 	const auto timeForOctreeMethod = std::chrono::duration<double>(t4 - t3).count();
 
 	std::ofstream myfile;
 	myfile.open("Results.txt");
 	myfile << "Point p :: " << "(" << p.x << "," << p.y << "," << p.z << ")" << std::endl;
-	myfile << "ClosestPoint q :: " << "(" << p.x << "," << p.y << "," << p.z << ")" << std::endl;
-	myfile << "timeForNaiveMethod :: " << timeForNaiveMethod << std::endl;
+	myfile << "ClosestPoint by brute force method q :: " << "(" << naivePair.first.x << "," << naivePair.first.y << "," << naivePair.first.z << ")" << std::endl;
+	myfile << "ClosestPoint by octree method q :: " << "(" << ocPair.first.x << "," << ocPair.first.y << "," << ocPair.first.z << ")" << std::endl;
+	myfile << "Distance to closest point by brute force method :: " << naivePair.second << std::endl;
+	myfile << "Distance to closest point by octree method :: " << ocPair.second << std::endl;
 	myfile << "timeForNaiveMethod :: " << timeForNaiveMethod << std::endl;
 	myfile << "timeForOctreeMethod :: " << timeForOctreeMethod << std::endl;
 	myfile.close();
@@ -111,13 +114,12 @@ void print(OctreeNode* node)
 	if (node == nullptr)
 		return;
 
-	float white[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-	for (int i = 0; i < 8; i++)
+    float white[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+	for (uint32_t i = 0; i < 8; i++)
 	{
 		if (node->child_[i] != nullptr && node->child_[i]->objectList_.size())
 		{
 			add_gl_db_aabb(&node->child_[i]->aabb_.min_[0], &node->child_[i]->aabb_.max_[0], white);
-			RenderAbstractAPI::objectSize += node->child_[i]->objectList_.size();
 		}
 		
 		print(node->child_[i].get());
@@ -151,10 +153,7 @@ void Callbacks::onRenderFrame(double deltaTime)
 	add_gl_db_aabb(&mesh.aabb_.min_[0], &mesh.aabb_.max_[0], white);
 	update_gl_db_cam_mat(&mvp[0][0]);
 
-	RenderAbstractAPI::objectSize = 0;
 	print(root.get());
-
-	const auto temp = RenderAbstractAPI::objectSize;
 
 	draw_gl_db(false);
 #endif

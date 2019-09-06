@@ -1,113 +1,25 @@
 #pragma once
-#include <glm/glm.hpp>
 #include <vector>
 #include <memory>
 #include <algorithm>
 
+#include "Utility.h"
+
 namespace MeshQuery
 {
-	constexpr double kEpsilon = 1e-8;
-	
-	class Ray
+
+	struct OctreeNode
 	{
-	public:
-		Ray() = default;
+		static const size_t NUM_CHILDREN = 8;
+		static const size_t DEFAULT_DEPTH = 3;
+		static const size_t DEFAULT_THRESHOLD = 100;
 
-		Ray(const glm::vec3& o, const glm::vec3& d) : origin_(o), direction_(d)
-		{
-
-		}
-
-		Ray(const glm::vec3& rhs)
-		{
-			*this = rhs;
-		}
-
-		Ray(glm::vec3&& rhs)
-		{
-			*this = std::move(rhs);
-		}
-
-		Ray& operator=(const Ray& rhs)
-		{
-			*this = rhs;
-		}
-
-		Ray& operator=(Ray&& rhs)
-		{
-			*this = std::move(rhs);
-		}
-
-		~Ray() = default;
-
-		glm::vec3 pointAtParameter(float t) const
-		{
-			return origin_ + t * direction_;
-		}
-
-		glm::vec3 origin_;
-		glm::vec3 direction_;
-	};
-
-	class AABB
-	{
-	public:
-		AABB() = default;
-		AABB(const glm::vec3 min, const glm::vec3 max) : min_(min), max_(max) {}
-		AABB(const AABB& rhs)
-		{
-			min_ = rhs.min_;
-			max_ = rhs.max_;
-		}
-
-		AABB(AABB&& rhs)
-		{
-			min_ = std::move(rhs.min_);
-			max_ = std::move(rhs.max_);
-		}
-
-		AABB& operator=(const AABB& rhs)
-		{
-			min_ = rhs.min_;
-			max_ = rhs.max_;
-			return *this;
-		}
-
-		AABB& operator=(AABB&& rhs)
-		{
-			min_ = std::move(rhs.min_);
-			max_ = std::move(rhs.max_);
-			return *this;
-		}
-
-		~AABB() = default;
-
-		AABB& extendBy(const glm::vec3& p)
-		{
-			if (p.x < min_.x) min_.x = p.x;
-			if (p.y < min_.y) min_.y = p.y;
-			if (p.z < min_.z) min_.z = p.z;
-			if (p.x > max_.x) max_.x = p.x;
-			if (p.y > max_.y) max_.y = p.y;
-			if (p.z > max_.z) max_.z = p.z;
-
-			return *this;
-		}
-
-		glm::vec3 min_;
-		glm::vec3 max_;
-	};
-
-	struct Triangle
-	{
-		glm::vec3 vertices_[3];
-		glm::vec3 normal_[3];
 		AABB aabb_;
-
-		bool operator==(const Triangle& rhs)
-		{
-			return vertices_[0] == rhs.vertices_[0] && vertices_[1] == rhs.vertices_[1] && vertices_[2] == rhs.vertices_[2];
-		}
+		size_t depth_;
+		bool isLeaf_;
+		OctreeNode* parent_;
+		std::unique_ptr<OctreeNode> child_[NUM_CHILDREN];
+		std::vector<Triangle> objectList_;
 	};
 
 	class AccelerationStructure
@@ -115,8 +27,10 @@ namespace MeshQuery
 	public:
 		
 		bool intersect(const Ray& r, const AABB& aabb) const;
+		
 		bool intersect(const Ray& r, const Triangle& triangle, float& t) const;
-		bool intersect(const AABB &a, const AABB &b)
+		
+		inline bool intersect(const AABB &a, const AABB &b) const
 		{
 			if (a.max_.x < b.min_.x || a.min_.x > b.max_.x) return false; 
 			if (a.max_.y < b.min_.y || a.min_.y > b.max_.y) return false;
@@ -125,99 +39,35 @@ namespace MeshQuery
 			return true;
 
 		};
-	};
 
-	struct OctreeNode;
 
-	class NoAcclerationStructure : public AccelerationStructure
-	{
-	public:
-
-	    //Get closest point on triangle
-		void getClosestPoint(glm::vec3 p, Triangle t, glm::vec3& closestPoint);
+		//Get closest point on triangle
+		void getClosestPoint(const glm::vec3 p, const Triangle t, glm::vec3& closestPoint) const;
 
 		//Get closest point on AABB
-		void getClosestPoint(glm::vec3 p, const AABB t, glm::vec3& closestPoint);
+		void getClosestPoint(const glm::vec3 p, const AABB t, glm::vec3& closestPoint) const;
 
 		//Find closesd point on to p on all triangles and distance to that point 
-		std::pair<glm::vec3, float> getClosestPoint(glm::vec3 p,  const std::vector<Triangle> triList);
+		std::pair<glm::vec3, float> getClosestPoint(const glm::vec3 p, const std::vector<Triangle> triList) const;
 
 		//Find closesd point to AABB and distance to that point
-		std::pair<glm::vec3, float> getClosestPoint(glm::vec3 p, OctreeNode* root);
+		std::pair<glm::vec3, float> getClosestPoint(const glm::vec3 p, OctreeNode* root) const;
 
-		float SqDistPointAABB(glm::vec3 p, AABB b);
+		float SqDistPointAABB(glm::vec3 p, AABB b) const;
 	};
 
-	struct OctreeNode :public AccelerationStructure
+	class NoAccelerationStructure : public AccelerationStructure
 	{
-		static const size_t NUM_CHILDREN = 8;
-		static const size_t DEFAULT_DEPTH = 1;
-		static const size_t DEFAULT_THRESHOLD = 100;
 
-		AABB aabb_;
-		int depth_;
-		bool isLeaf_;
-		OctreeNode* parent_;
-		std::unique_ptr<OctreeNode> child_[NUM_CHILDREN];
-		std::vector<Triangle> objectList_;
 	};
 
-	class Octree : public OctreeNode
+	class Octree : public AccelerationStructure
 	{
 	public:
 		
-		void buildTree(OctreeNode* node)
-		{
-			for (size_t i = 0; i != NUM_CHILDREN; i++)
-			{
-				node->child_[i] = nullptr;
-			}
+		void buildTree(OctreeNode* node);
 
-			if (node->depth_ >= DEFAULT_DEPTH)
-			{
-				node->isLeaf_ = true;
-				return;
-			}
-
-			for (size_t i = 0; i != NUM_CHILDREN; i++)
-			{
-				node->child_[i] = std::make_unique<OctreeNode>();
-				const AABB ChildBox = GetOctaSplit(node->aabb_, i);
-
-				node->child_[i]->parent_ = node;
-				node->child_[i]->aabb_ = ChildBox;
-				node->child_[i]->depth_ = node->depth_ + 1;
-				node->isLeaf_ = false;
-
-				buildTree(node->child_[i].get());
-			}
-		}
-
-		void insertTriangle(OctreeNode* node, Triangle t)
-		{
-			if (node == nullptr)
-			{
-				return;
-			}
-
-			if (node->depth_ >= DEFAULT_DEPTH)
-			{
-				return;
-			}
-
-			for (size_t i = 0; i != NUM_CHILDREN; i++)
-			{
-				if (intersect(t.aabb_, node->child_[i]->aabb_))
-				{
-					node->child_[i]->objectList_.push_back(t);
-
-					if(!node->objectList_.empty())
-					   node->objectList_.erase(std::remove_if(node->objectList_.begin(), node->objectList_.end() - 1, [t](auto temp) { return temp == t; }));
-
-					insertTriangle(node->child_[i].get(), t);
-				}
-			}
-		}
+		void insertTriangle(OctreeNode* node, Triangle t);
 
 		AABB GetOctaSplit(const AABB& B, size_t Idx)
 		{
@@ -253,8 +103,6 @@ namespace MeshQuery
 #undef yc
 #undef zc
 		}
-
-		
 	};
 }
 
