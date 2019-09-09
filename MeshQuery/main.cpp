@@ -62,7 +62,6 @@ void Callbacks::onInit()
 	root->isLeaf_ = false;
 
 	oc.buildTree(root.get());
-
 	for (auto t : root->objectList_)
 	{
 		oc.insertTriangle(root.get(), t);
@@ -73,16 +72,16 @@ void Callbacks::onInit()
 	const auto t4 = std::chrono::time_point_cast<milisec>(std::chrono::high_resolution_clock::now());
 	const auto timeForOctreeMethod = std::chrono::duration<double>(t4 - t3).count();
 
-	std::ofstream myfile;
-	myfile.open("Results.txt");
-	myfile << "Point p :: " << "(" << p.x << "," << p.y << "," << p.z << ")" << std::endl;
-	myfile << "ClosestPoint by brute force method q :: " << "(" << naivePair.first.x << "," << naivePair.first.y << "," << naivePair.first.z << ")" << std::endl;
-	myfile << "ClosestPoint by octree method q :: " << "(" << ocPair.first.x << "," << ocPair.first.y << "," << ocPair.first.z << ")" << std::endl;
-	myfile << "Distance to closest point by brute force method :: " << naivePair.second << std::endl;
-	myfile << "Distance to closest point by octree method :: " << ocPair.second << std::endl;
-	myfile << "timeForNaiveMethod :: " << timeForNaiveMethod << std::endl;
-	myfile << "timeForOctreeMethod :: " << timeForOctreeMethod << std::endl;
-	myfile.close();
+	std::ofstream result;
+	result.open("Results.txt");
+	result << "Point p :: " << "(" << p.x << "," << p.y << "," << p.z << ")" << std::endl;
+	result << "ClosestPoint by brute force method q :: " << "(" << naivePair.first.x << "," << naivePair.first.y << "," << naivePair.first.z << ")" << std::endl;
+	result << "ClosestPoint by octree method q :: " << "(" << ocPair.first.x << "," << ocPair.first.y << "," << ocPair.first.z << ")" << std::endl;
+	result << "Distance to closest point by brute force method :: " << naivePair.second << std::endl;
+	result << "Distance to closest point by octree method :: " << ocPair.second << std::endl;
+	result << "Time For Naive Method :: " << timeForNaiveMethod << std::endl;
+	result << "Time For Octree Method :: " << timeForOctreeMethod << std::endl;
+	result.close();
 }
 
 void Callbacks::onKey(int keyCode, bool pressed)

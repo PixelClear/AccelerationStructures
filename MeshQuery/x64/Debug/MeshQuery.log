@@ -1,4 +1,14 @@
-﻿  AcclerationStructures.cpp
-  main.cpp
-  Generating Code...
-  MeshQuery.vcxproj -> C:\Users\pariku\source\repos\backup\MeshQuery\x64\Debug\MeshQuery.exe
+﻿  main.cpp
+c:\users\pariku\source\repos\meshqgithub\accelerationstructures\meshquery\utility.h(78): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+c:\users\pariku\source\repos\meshqgithub\accelerationstructures\meshquery\utility.h(79): warning C4244: 'argument': conversion from 'int' to 'T', possible loss of data
+          with
+          [
+              T=float
+          ]
+c:\users\pariku\source\repos\meshqgithub\accelerationstructures\meshquery\utility.h(82): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
+c:\users\pariku\source\repos\meshqgithub\accelerationstructures\meshquery\utility.h(83): warning C4244: 'argument': conversion from 'int' to 'T', possible loss of data
+          with
+          [
+              T=float
+          ]
+  MeshQuery.vcxproj -> C:\Users\pariku\source\repos\MeshQGithub\AccelerationStructures\x64\Debug\MeshQuery.exe

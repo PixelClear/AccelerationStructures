@@ -13,26 +13,6 @@ namespace MeshQuery
 
 		}
 
-		Ray(const glm::vec3& rhs)
-		{
-			*this = rhs;
-		}
-
-		Ray(glm::vec3&& rhs)
-		{
-			*this = std::move(rhs);
-		}
-
-		Ray& operator=(const Ray& rhs)
-		{
-			*this = rhs;
-		}
-
-		Ray& operator=(Ray&& rhs)
-		{
-			*this = std::move(rhs);
-		}
-
 		~Ray() = default;
 
 		glm::vec3 pointAtParameter(float t) const
@@ -49,17 +29,8 @@ namespace MeshQuery
 	public:
 		AABB() = default;
 		AABB(const glm::vec3 min, const glm::vec3 max) : min_(min), max_(max) {}
-		AABB(const AABB& rhs)
-		{
-			min_ = rhs.min_;
-			max_ = rhs.max_;
-		}
-
-		AABB(AABB&& rhs)
-		{
-			min_ = std::move(rhs.min_);
-			max_ = std::move(rhs.max_);
-		}
+		AABB(const AABB& rhs) : min_(rhs.min_), max_(rhs.max_) {}
+		AABB(AABB&& rhs) : min_(std::move(rhs.min_)), max_(std::move(rhs.max_)) {}
 
 		AABB& operator=(const AABB& rhs)
 		{
@@ -87,6 +58,29 @@ namespace MeshQuery
 			if (p.z > max_.z) max_.z = p.z;
 
 			return *this;
+		}
+
+		int roundUp(int numToRound, int multiple)
+		{
+			if (multiple == 0)
+				return numToRound;
+
+			int remainder = numToRound % multiple;
+			if (remainder == 0)
+				return numToRound;
+
+			return numToRound + multiple - remainder;
+		}
+
+		void adjustAABB()
+		{
+			float min = min_.x < min_.y ? (min_.x < min_.z ? min_.x : min_.z) : (min_.y < min_.z ? min_.y : min_.y);
+			int round = std::ceil(min);
+			min_= glm::vec3(roundUp(round, 2));
+
+			float max = max_.x > max_.y ? (max_.x > max_.z ? max_.x : max_.z) : (max_.y > max_.z ? max_.y : max_.y);
+			round = std::floor(max);
+			max_ = glm::vec3(roundUp(round, 2));
 		}
 
 		glm::vec3 min_;

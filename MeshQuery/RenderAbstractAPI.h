@@ -96,9 +96,8 @@ namespace RenderAbstractAPI
 			mesh.triangles_.push_back(t);
 		}
 
-		//Adjust AABB
-		mesh.aabb_.min_ = glm::vec3(-2.0f);
-		mesh.aabb_.max_ = glm::vec3(2.0f);
+		//Adjust AABB to multiple of 2 becomes good for OCtree construction
+		mesh.aabb_.adjustAABB();
 
 		return true;
 	}

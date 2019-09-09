@@ -1,8 +1,9 @@
 Point p :: (-8,-8,-8)
-Number Of Triangles : 23566
 ClosestPoint by brute force method q :: (-1.03506,-0.758018,-0.895058)
 ClosestPoint by octree method q :: (-1.03506,-0.758018,-0.895058)
 Distance to closest point by brute force method :: 12.306
 Distance to closest point by octree method :: 12.306
-timeForNaiveMethod :: 0.052
-timeForOctreeMethod :: 0.002
+Time For Naive Method :: 0.052
+Time For Octree Method :: 0.002
+Time For Building Octree :: 0.004
+Time For Inserting Triangles In OctreeMethod :: 35.701
