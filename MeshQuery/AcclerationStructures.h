@@ -40,20 +40,6 @@ namespace MeshQuery
 
 		};
 
-
-		//Get closest point on triangle
-		void getClosestPoint(const glm::vec3 p, const Triangle t, glm::vec3& closestPoint) const;
-
-		//Get closest point on AABB
-		void getClosestPoint(const glm::vec3 p, const AABB t, glm::vec3& closestPoint) const;
-
-		//Find closesd point on to p on all triangles and distance to that point 
-		std::pair<glm::vec3, float> getClosestPoint(const glm::vec3 p, const std::vector<Triangle> triList) const;
-
-		//Find closesd point to AABB and distance to that point
-		std::pair<glm::vec3, float> getClosestPoint(const glm::vec3 p, OctreeNode* root) const;
-
-		float SqDistPointAABB(glm::vec3 p, AABB b) const;
 	};
 
 	class NoAccelerationStructure : public AccelerationStructure
@@ -103,6 +89,52 @@ namespace MeshQuery
 #undef yc
 #undef zc
 		}
+	};
+
+
+	enum BvhStrategy
+	{
+		Sah,
+		Hlbvh,
+		Middle,
+		EqualCountes
+	};
+
+	struct PrimitiveInfo
+	{
+		PrimitiveInfo() = delete;
+		PrimitiveInfo(size_t primNum, const AABB& aabb) :
+		primNum_(primNum), aabb_(aabb), centroid_(0.5f * aabb_.min_ + 0.5f * aabb_.max_)
+		{ }
+
+		size_t primNum_;
+		AABB aabb_;
+		glm::vec3 centroid_;
+	};
+
+	struct BvhNode
+	{
+		BvhNode() = delete;
+
+		void initLeaf(){}
+		void initInterior(){}
+
+		AABB aabb_;
+		BvhNode* children_[2];
+		size_t splitAxis_;
+		size_t firstPrimOffset_;
+		size_t nPrims_;
+	};
+
+	class BVH : public AccelerationStructure
+	{
+	public:
+		BVH() = delete;
+		BVH(const std::vector<Triangle>& prims, BvhStrategy strategy) : prims_(prims), stragegy_(strategy) {}
+
+	private:
+		std::vector<Triangle> prims_;
+		BvhStrategy strategy_;
 	};
 }
 

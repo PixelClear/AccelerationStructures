@@ -8,6 +8,7 @@
 #include "RenderAbstractAPI.h"
 #include "AcclerationStructures.h"
 
+#define USE_BVH
 using namespace MeshQuery;
 
 using milisec = std::chrono::milliseconds;
@@ -44,15 +45,7 @@ void Callbacks::onInit()
 	init_gl_db();
 #endif
 
-	//Implementation without any Acceleration structure
-	NoAccelerationStructure na;
-	glm::vec3 p(-8.0f);
-
-	auto t1 = std::chrono::time_point_cast<milisec>(std::chrono::high_resolution_clock::now());
-	const auto naivePair = na.getClosestPoint(p, mesh.triangles_);
-	auto t2 = std::chrono::time_point_cast<milisec>(std::chrono::high_resolution_clock::now());
-	const auto timeForNaiveMethod = std::chrono::duration<double>(t2 - t1).count();
-	
+#if defined(USE_OCTREE)
 	//Implementation with Octree
 	Octree oc;
 	root = std::make_unique<OctreeNode>();
@@ -66,22 +59,10 @@ void Callbacks::onInit()
 	{
 		oc.insertTriangle(root.get(), t);
 	}
+#elif defined(USE_BVH)
 
-	const auto t3 = std::chrono::time_point_cast<milisec>(std::chrono::high_resolution_clock::now());
-	const auto ocPair = oc.getClosestPoint(p, root.get());
-	const auto t4 = std::chrono::time_point_cast<milisec>(std::chrono::high_resolution_clock::now());
-	const auto timeForOctreeMethod = std::chrono::duration<double>(t4 - t3).count();
+#endif
 
-	std::ofstream result;
-	result.open("Results.txt");
-	result << "Point p :: " << "(" << p.x << "," << p.y << "," << p.z << ")" << std::endl;
-	result << "ClosestPoint by brute force method q :: " << "(" << naivePair.first.x << "," << naivePair.first.y << "," << naivePair.first.z << ")" << std::endl;
-	result << "ClosestPoint by octree method q :: " << "(" << ocPair.first.x << "," << ocPair.first.y << "," << ocPair.first.z << ")" << std::endl;
-	result << "Distance to closest point by brute force method :: " << naivePair.second << std::endl;
-	result << "Distance to closest point by octree method :: " << ocPair.second << std::endl;
-	result << "Time For Naive Method :: " << timeForNaiveMethod << std::endl;
-	result << "Time For Octree Method :: " << timeForOctreeMethod << std::endl;
-	result.close();
 }
 
 void Callbacks::onKey(int keyCode, bool pressed)

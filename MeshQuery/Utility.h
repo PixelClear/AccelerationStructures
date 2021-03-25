@@ -27,7 +27,10 @@ namespace MeshQuery
 	class AABB
 	{
 	public:
-		AABB() = default;
+		AABB() {
+			min_ = std::numeric_limits<glm::vec3>::max();
+			max_ = std::numeric_limits<glm::vec3>::lowest();
+		}
 		AABB(const glm::vec3 min, const glm::vec3 max) : min_(min), max_(max) {}
 		AABB(const AABB& rhs) : min_(rhs.min_), max_(rhs.max_) {}
 		AABB(AABB&& rhs) : min_(std::move(rhs.min_)), max_(std::move(rhs.max_)) {}
