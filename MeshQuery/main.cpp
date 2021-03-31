@@ -8,7 +8,7 @@
 #include "RenderAbstractAPI.h"
 #include "AcclerationStructures.h"
 
-#define USE_BVH
+#define USE_OCTREE
 using namespace MeshQuery;
 
 using milisec = std::chrono::milliseconds;
@@ -30,9 +30,13 @@ void Callbacks::onInit()
 {
 	std::string asset{ "../Assets/model.obj" };
 
+#if !defined(USE_OCTREE)
 	mesh.objToWorld_ = glm::translate(glm::mat4(1.0), glm::vec3(0.0, 0.0, -RenderAbstractAPI::cameraZoom));
 	mesh.objToWorld_ = glm::scale(mesh.objToWorld_, glm::vec3(3.0f, 3.0f, 3.0f));
 	mesh.objToWorld_ = glm::rotate(mesh.objToWorld_, RenderAbstractAPI::cameraX, glm::vec3(0.0, 1.0, 0.0));
+#else
+	mesh.objToWorld_ = glm::mat4(1.0);
+#endif
 
 	if (!RenderAbstractAPI::loadObject(asset))
 	{
@@ -140,7 +144,14 @@ void Callbacks::onRenderFrame(double deltaTime)
 	glUseProgram(RenderAbstractAPI::renderProg);
 
 	glm::mat4 view = glm::lookAt(glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 0.0, -5.0), glm::vec3(0.0, 1.0, 0.0));
+
+#if !defined(USE_OCTREE)
 	mesh.objToWorld_ = glm::translate(glm::mat4(1.0), glm::vec3(0.0, 0.0, -RenderAbstractAPI::cameraZoom));
+#else
+	mesh.objToWorld_ = glm::translate(glm::mat4(1.0), glm::vec3(0.0, 0.0, -RenderAbstractAPI::cameraZoom));
+	mesh.objToWorld_ = glm::scale(mesh.objToWorld_, glm::vec3(3.0f, 3.0f, 3.0f));
+	mesh.objToWorld_ = glm::rotate(mesh.objToWorld_, RenderAbstractAPI::cameraX, glm::vec3(0.0, 1.0, 0.0));
+#endif
 
 	glUniformMatrix4fv(RenderAbstractAPI::modelLocation, 1, GL_FALSE, &mesh.objToWorld_[0][0]);
 	glUniformMatrix4fv(RenderAbstractAPI::viewLocation, 1, GL_FALSE, &view[0][0]);
