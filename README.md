@@ -7,3 +7,6 @@ Octree Building
 
 Octree MeshComponent Insertion
 ![Alt text](https://github.com/PixelClear/AccelerationStructures/blob/master/OctreeInsert.png)
+
+BvhMidpoint Method
+![Alt text](https://github.com/PixelClear/AccelerationStructures/blob/master/BvhMidpoint.png)
