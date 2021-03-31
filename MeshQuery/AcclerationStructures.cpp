@@ -135,3 +135,81 @@ void MeshQuery::Octree::insertTriangle(OctreeNode * node, Triangle t)
 		}
 	}
 }
+
+MeshQuery::BVH::BVH(const std::vector<Triangle>& prims, BvhStrategy strategy) :prims_(prims), strategy_(strategy)
+{
+	std::vector<PrimitiveInfo> primInfo(prims.size());
+	for (size_t i = 0; i < prims.size(); i++)
+	{
+		primInfo[i] = { i, prims[i].aabb_ };
+	}
+
+	std::vector<Triangle> orderedPrims(prims.size());
+	int totalNodes = 0;
+
+	root_ = recursiveBuild(primInfo, 0, prims.size(), &totalNodes, orderedPrims);
+}
+
+MeshQuery::BvhNode * MeshQuery::BVH::recursiveBuild(std::vector<PrimitiveInfo>& primInfo, int start, int end, int* totalNodes, std::vector<Triangle>& orderedPrims)
+{
+	if (start == end)
+		return nullptr;
+
+	BvhNode* node = new BvhNode();
+	(*totalNodes)++;
+
+	AABB bounds;
+	for (int i = start; i < end; i++) {
+		bounds = Union(bounds, primInfo[i].aabb_);
+	}
+
+	int numOfPrims = end - start;
+	if (numOfPrims == 1) {
+		int offset = orderedPrims.size();
+		for (int i = start; i < end; i++) {
+			orderedPrims.push_back(prims_[primInfo[i].primNum_]);
+		}
+		node->initLeaf(offset, numOfPrims, bounds);
+		return node;
+	}
+	else {
+		AABB centroidBounds;
+		for (int i = start; i < end; i++) {
+			centroidBounds = Union(centroidBounds, primInfo[i].centroid_);
+		}
+
+		int axis = centroidBounds.getDominantAxis();
+		int mid = (start + end) / 2;
+		//We dont have any volume so we should stop the recursion
+		if (centroidBounds.min_[axis] == centroidBounds.max_[axis]) {
+			int offset = orderedPrims.size();
+			for (int i = start; i < end; i++) {
+				orderedPrims.push_back(prims_[primInfo[i].primNum_]);
+			}
+			node->initLeaf(offset, numOfPrims, bounds);
+			return node;
+		}
+		else {
+			//ToDo add other methods later on currently only midpoint
+			float midPt = (centroidBounds.min_[axis] + centroidBounds.max_[axis]) / 2;
+
+			PrimitiveInfo* midPtr = std::partition(&primInfo[start],
+				&primInfo[end - 1] + 1,
+				[axis, midPt](const PrimitiveInfo& prim) {
+				return prim.centroid_[axis] < midPt;
+			});
+
+			mid = midPtr - &primInfo[0];
+
+			if (mid == start || mid == end) {
+				//ToDo currently undesired till we implement another methods
+				printf("I shouldnt come here!");
+			}
+
+			node->initInterior(axis, recursiveBuild(primInfo, start, mid, totalNodes, orderedPrims),
+				recursiveBuild(primInfo, mid, end, totalNodes, orderedPrims));
+		}
+	}
+
+	return node;
+}

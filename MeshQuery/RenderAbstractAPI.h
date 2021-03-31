@@ -6,7 +6,7 @@ using namespace MeshQuery;
 
 namespace RenderAbstractAPI
 {
-	float cameraZoom = 8.0f;
+	float cameraZoom = 7.0f;
 	float cameraX = 0.0f;
 	glm::mat4 projection;
 	GLuint renderProg;
@@ -98,6 +98,29 @@ namespace RenderAbstractAPI
 
 		//Adjust AABB to multiple of 2 becomes good for OCtree construction
 		mesh.aabb_.adjustAABB();
+		glm::mat4 M = mesh.objToWorld_;
+
+		for (auto& t : mesh.triangles_)
+		{
+			AABB b = t.aabb_;
+			AABB ret(M * glm::vec4(b.min_.x, b.min_.y, b.min_.z, 1.0f));
+			glm::vec4 t1= M * glm::vec4(b.max_.x, b.min_.y, b.min_.z, 1.0f);
+			glm::vec4 t2= M * glm::vec4(b.min_.x, b.max_.y, b.min_.z, 1.0f);
+			glm::vec4 t3= M * glm::vec4(b.min_.x, b.min_.y, b.max_.z, 1.0f);
+			glm::vec4 t4= M * glm::vec4(b.min_.x, b.max_.y, b.max_.z, 1.0f);
+			glm::vec4 t5= M * glm::vec4(b.max_.x, b.max_.y, b.min_.z, 1.0f);
+			glm::vec4 t6= M * glm::vec4(b.max_.x, b.min_.y, b.max_.z, 1.0f);
+			glm::vec4 t7= M * glm::vec4(b.max_.x, b.max_.y, b.max_.z, 1.0f);
+			ret = Union(ret, t1);
+			ret = Union(ret, t2);
+			ret = Union(ret, t3);
+			ret = Union(ret, t4);
+			ret = Union(ret, t5);
+			ret = Union(ret, t6);
+			ret = Union(ret, t7);
+			
+			t.aabb_ = ret;
+		}
 
 		return true;
 	}

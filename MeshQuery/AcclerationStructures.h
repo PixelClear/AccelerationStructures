@@ -102,7 +102,7 @@ namespace MeshQuery
 
 	struct PrimitiveInfo
 	{
-		PrimitiveInfo() = delete;
+		PrimitiveInfo() = default;
 		PrimitiveInfo(size_t primNum, const AABB& aabb) :
 		primNum_(primNum), aabb_(aabb), centroid_(0.5f * aabb_.min_ + 0.5f * aabb_.max_)
 		{ }
@@ -112,12 +112,64 @@ namespace MeshQuery
 		glm::vec3 centroid_;
 	};
 
+	inline glm::vec3 min(glm::vec3& a, glm::vec3& b) {
+		return glm::vec3(std::min(a.x, b.x), std::min(a.y, b.y), std::min(a.z, b.z));
+	}
+
+	inline glm::vec3 max(glm::vec3& a, glm::vec3& b) {
+		return glm::vec3(std::max(a.x, b.x), std::max(a.y, b.y), std::max(a.z, b.z));
+	}
+
+	inline glm::vec3 min(glm::vec3& a, glm::vec4& b) {
+		return glm::vec3(std::min(a.x, b.x), std::min(a.y, b.y), std::min(a.z, b.z));
+	}
+
+	inline glm::vec3 max(glm::vec3& a, glm::vec4& b) {
+		return glm::vec3(std::max(a.x, b.x), std::max(a.y, b.y), std::max(a.z, b.z));
+	}
+
+	inline AABB Union(AABB& a, AABB& b)
+	{
+		AABB c;
+		c.min_ = min(a.min_, b.min_);
+		c.max_ = max(a.max_, b.max_);
+		return c;
+	}
+
+	inline AABB Union(AABB& a, glm::vec3& b)
+	{
+		AABB c;
+		c.min_ = min(a.min_, b);
+		c.max_ = max(a.max_, b);
+		return c;
+	}
+
+	inline AABB Union(AABB& a, glm::vec4& b)
+	{
+		AABB c;
+		c.min_ = min(a.min_, b);
+		c.max_ = max(a.max_, b);
+		return c;
+	}
+
 	struct BvhNode
 	{
-		BvhNode() = delete;
+		BvhNode() = default;
 
-		void initLeaf(){}
-		void initInterior(){}
+		void initLeaf(int offset, int n, const AABB& b){
+			firstPrimOffset_ = offset;
+			nPrims_ = n;
+			aabb_ = b;
+			children_[0] = children_[1] = nullptr;
+		}
+
+		void initInterior(int axis, BvhNode* c0, BvhNode* c1){
+			children_[0] = c0;
+			children_[1] = c1;
+			aabb_ = Union(c0->aabb_, c1->aabb_);
+			splitAxis_ = axis;
+			nPrims_ = 0;
+		}
 
 		AABB aabb_;
 		BvhNode* children_[2];
@@ -130,11 +182,14 @@ namespace MeshQuery
 	{
 	public:
 		BVH() = delete;
-		BVH(const std::vector<Triangle>& prims, BvhStrategy strategy) : prims_(prims), stragegy_(strategy) {}
-
+		BVH(const std::vector<Triangle>& prims, BvhStrategy strategy);
+		BvhNode* recursiveBuild(std::vector<PrimitiveInfo>& primInfo, int start, int end, int* totalNodes, std::vector<Triangle>& orderedPrims);
+		BvhNode* root_;
 	private:
+
 		std::vector<Triangle> prims_;
 		BvhStrategy strategy_;
+		
 	};
 }
 

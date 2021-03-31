@@ -13,7 +13,8 @@ using namespace MeshQuery;
 
 using milisec = std::chrono::milliseconds;
 using seconds = std::chrono::seconds;
-std::unique_ptr<OctreeNode> root;
+std::unique_ptr<OctreeNode> octRoot;
+BvhNode* bvhRoot = nullptr;
 
 class Callbacks : public SDLCallbacks
 {
@@ -28,6 +29,10 @@ public:
 void Callbacks::onInit()
 {
 	std::string asset{ "../Assets/model.obj" };
+
+	mesh.objToWorld_ = glm::translate(glm::mat4(1.0), glm::vec3(0.0, 0.0, -RenderAbstractAPI::cameraZoom));
+	mesh.objToWorld_ = glm::scale(mesh.objToWorld_, glm::vec3(3.0f, 3.0f, 3.0f));
+	mesh.objToWorld_ = glm::rotate(mesh.objToWorld_, RenderAbstractAPI::cameraX, glm::vec3(0.0, 1.0, 0.0));
 
 	if (!RenderAbstractAPI::loadObject(asset))
 	{
@@ -48,19 +53,20 @@ void Callbacks::onInit()
 #if defined(USE_OCTREE)
 	//Implementation with Octree
 	Octree oc;
-	root = std::make_unique<OctreeNode>();
-	root->aabb_ = mesh.aabb_;
-	root->depth_ = 0;
-	root->objectList_ = mesh.triangles_;
-	root->isLeaf_ = false;
+	octRoot = std::make_unique<OctreeNode>();
+	octRoot->aabb_ = mesh.aabb_;
+	octRoot->depth_ = 0;
+	octRoot->objectList_ = mesh.triangles_;
+	octRoot->isLeaf_ = false;
 
-	oc.buildTree(root.get());
-	for (auto t : root->objectList_)
+	oc.buildTree(octRoot.get());
+	for (auto t : octRoot->objectList_)
 	{
-		oc.insertTriangle(root.get(), t);
+		oc.insertTriangle(octRoot.get(), t);
 	}
 #elif defined(USE_BVH)
-
+	BVH builder(mesh.triangles_, Middle);
+	bvhRoot = builder.root_;
 #endif
 
 }
@@ -87,6 +93,24 @@ void Callbacks::onKey(int keyCode, bool pressed)
 void Callbacks::onViewportSizeChanged(int w, int h)
 {
     RenderAbstractAPI::projection = glm::perspective(45.0f, w / (float)h, 1.f, 1000.0f);
+}
+
+void print(BvhNode* node)
+{
+	if (node == nullptr)
+		return;
+
+	float white[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+
+	if (node->children_[0] != nullptr)
+	{
+		add_gl_db_aabb(&node->children_[0]->aabb_.min_[0], &node->children_[0]->aabb_.max_[0], white);
+	}
+
+	if (node->children_[1] != nullptr)
+	{
+		add_gl_db_aabb(&node->children_[1]->aabb_.min_[0], &node->children_[1]->aabb_.max_[0], white);
+	}
 }
 
 void print(OctreeNode* node)
@@ -116,10 +140,9 @@ void Callbacks::onRenderFrame(double deltaTime)
 	glUseProgram(RenderAbstractAPI::renderProg);
 
 	glm::mat4 view = glm::lookAt(glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 0.0, -5.0), glm::vec3(0.0, 1.0, 0.0));
-	glm::mat4 model = glm::translate(glm::mat4(1.0), glm::vec3(0.0, 0.0, -RenderAbstractAPI::cameraZoom));
-	model = glm::rotate(model, RenderAbstractAPI::cameraX, glm::vec3(0.0, 1.0, 0.0));
+	mesh.objToWorld_ = glm::translate(glm::mat4(1.0), glm::vec3(0.0, 0.0, -RenderAbstractAPI::cameraZoom));
 
-	glUniformMatrix4fv(RenderAbstractAPI::modelLocation, 1, GL_FALSE, &model[0][0]);
+	glUniformMatrix4fv(RenderAbstractAPI::modelLocation, 1, GL_FALSE, &mesh.objToWorld_[0][0]);
 	glUniformMatrix4fv(RenderAbstractAPI::viewLocation, 1, GL_FALSE, &view[0][0]);
 	glUniformMatrix4fv(RenderAbstractAPI::projectionLocation, 1, GL_FALSE, &RenderAbstractAPI::projection[0][0]);
 
@@ -128,13 +151,16 @@ void Callbacks::onRenderFrame(double deltaTime)
 
 #if _DEBUG
 	float white[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-	glm::mat4 mvp = RenderAbstractAPI::projection * view * model;
+	glm::mat4 mvp = RenderAbstractAPI::projection * view * mesh.objToWorld_;
 
 	add_gl_db_aabb(&mesh.aabb_.min_[0], &mesh.aabb_.max_[0], white);
 	update_gl_db_cam_mat(&mvp[0][0]);
 
-	print(root.get());
-
+#ifndef USE_BVH
+	print(octRoot.get());
+#else
+	print(bvhRoot);
+#endif
 	draw_gl_db(false);
 #endif
 }

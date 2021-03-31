@@ -28,10 +28,13 @@ namespace MeshQuery
 	{
 	public:
 		AABB() {
-			min_ = std::numeric_limits<glm::vec3>::max();
-			max_ = std::numeric_limits<glm::vec3>::lowest();
+			min_ = glm::vec3(std::numeric_limits<float>::max());
+			max_ = glm::vec3(std::numeric_limits<float>::lowest());
 		}
 		AABB(const glm::vec3 min, const glm::vec3 max) : min_(min), max_(max) {}
+		AABB(const glm::vec4& t) {
+			min_ = glm::vec3(t.x, t.y, t.z); max_ = glm::vec3(t.x, t.y, t.z);
+		}
 		AABB(const AABB& rhs) : min_(rhs.min_), max_(rhs.max_) {}
 		AABB(AABB&& rhs) : min_(std::move(rhs.min_)), max_(std::move(rhs.max_)) {}
 
@@ -84,6 +87,17 @@ namespace MeshQuery
 			float max = max_.x > max_.y ? (max_.x > max_.z ? max_.x : max_.z) : (max_.y > max_.z ? max_.y : max_.y);
 			round = std::floor(max);
 			max_ = glm::vec3(roundUp(round, 2));
+		}
+
+		int getDominantAxis() {
+			glm::vec3 d = max_ - min_;
+
+			if (d.x > d.y && d.x > d.z)
+				return 0;
+			else if (d.y > d.z)
+				return 1;
+			else
+				return 2;
 		}
 
 		glm::vec3 min_;
