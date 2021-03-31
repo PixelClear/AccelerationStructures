@@ -8,7 +8,7 @@
 #include "RenderAbstractAPI.h"
 #include "AcclerationStructures.h"
 
-#define USE_OCTREE
+#define USE_BVH
 using namespace MeshQuery;
 
 using milisec = std::chrono::milliseconds;
